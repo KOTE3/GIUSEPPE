@@ -1,0 +1,63 @@
+import {
+  Controller,
+  Post,
+  Get,
+  Body,
+  Param,
+  Put,
+  Delete,
+  Query,
+  NotFoundException,
+} from '@nestjs/common';
+import { HotelService } from './hotel.service';
+import { CreateHotelDto } from './dto/create-hotel.dto';
+import { UpdateHotelDto } from './dto/update-hotel.dto';
+import { Hotel } from './hotel.entity';
+
+@Controller('hotels')
+export class HotelController {
+  constructor(private readonly hotelService: HotelService) {}
+
+  @Post()
+  async createHotel(@Body() createHotelDto: CreateHotelDto): Promise<Hotel> {
+    return this.hotelService.create(createHotelDto);
+  }
+
+  @Get()
+  async getAllHotels(): Promise<Hotel[]> {
+    return this.hotelService.findAll();
+  }
+
+  // Las rutas fijas van ANTES de ':id'; si no, GET /hotels/search entra a getHotel con id = 'search'
+  @Get('search')
+  async searchHotels(@Query('location') location: string): Promise<Hotel[]> {
+    return this.hotelService.searchByLocation(location);
+  }
+
+  @Get('available')
+  async getAvailableHotels(): Promise<Hotel[]> {
+    return this.hotelService.getAvailableHotels();
+  }
+
+  @Get(':id')
+  async getHotel(@Param('id') id: string): Promise<Hotel> {
+    return this.hotelService.findOne(parseInt(id));
+  }
+
+  @Put(':id')
+  async updateHotel(
+    @Param('id') id: string,
+    @Body() updateData: UpdateHotelDto,
+  ): Promise<Hotel> {
+    return this.hotelService.update(parseInt(id), updateData);
+  }
+
+  @Delete(':id')
+  async deleteHotel(@Param('id') id: string): Promise<{ success: boolean }> {
+    const deleted = await this.hotelService.delete(parseInt(id));
+    if (!deleted) {
+      throw new NotFoundException(`Hotel with id ${id} not found`);
+    }
+    return { success: true };
+  }
+}
